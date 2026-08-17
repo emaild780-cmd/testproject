@@ -28,6 +28,7 @@ interface DiscoveredPage {
   networkErrors: number;
   links: string[];
   features: DiscoveredFeature[];
+  error?: string;
 }
 
 const supabase = createClient(
@@ -76,7 +77,7 @@ interface BrowserHandle {
   isRemote: boolean;
 }
 
-const DISCOVERY_SCRIPT = `() => {
+const DISCOVERY_SCRIPT = `(() => {
   const features = [];
   const seen = new Set();
   const addFeature = (type, selector, label, attributes = {}) => {
@@ -220,7 +221,7 @@ const DISCOVERY_SCRIPT = `() => {
     features,
     links: internalLinks.slice(0, 100),
   };
-}`;
+})()`;
 
 interface DiscoveryResult {
   url: string;
@@ -272,7 +273,11 @@ async function discoverPage(
     // Wait for potential lazy-loaded content
     await page.waitForTimeout(1000).catch(() => {});
 
-    const result = await page.evaluate(DISCOVERY_SCRIPT) as DiscoveryResult;
+    const rawResult = await page.evaluate(DISCOVERY_SCRIPT);
+    if (!rawResult || typeof rawResult !== "object") {
+      throw new Error("Discovery script returned no result — page may be blocked or empty");
+    }
+    const result = rawResult as DiscoveryResult;
 
     const loadTimeMs = Date.now() - start;
 
@@ -305,6 +310,7 @@ async function discoverPage(
       networkErrors: networkErrors.length + 1,
       links: [],
       features: [],
+      error: errorMsg,
     };
   }
 }
@@ -492,13 +498,13 @@ Deno.serve(async (req: Request) => {
       progress: 50,
     }).eq("id", runId);
 
-    // Insert app_pages
+    // Insert app_pages — mark pages with discovery errors as failed
     const pageRecords = pages.map((p) => ({
       run_id: runId,
       url: p.url,
       title: p.title,
       depth: p.depth,
-      status: p.statusCode >= 400 ? "failed" as const : "discovered" as const,
+      status: (p.error || p.statusCode >= 400) ? "failed" as const : "discovered" as const,
       status_code: p.statusCode,
       load_time_ms: p.loadTimeMs,
       console_errors: p.consoleErrors,
@@ -562,7 +568,7 @@ Deno.serve(async (req: Request) => {
     const untestedAreas = pages.map((p) => ({
       url: p.url,
       title: p.title,
-      reason: "Discovery complete — test generation pending",
+      reason: p.error || "Discovery complete — test generation pending",
     }));
 
     await supabase.from("coverage").insert({
@@ -583,12 +589,19 @@ Deno.serve(async (req: Request) => {
       techniques_used: [],
     });
 
+    // Surface discovery errors on the run if any page failed to yield features
+    const discoveryErrors = pages.filter((p) => p.error).map((p) => `${p.url}: ${p.error}`);
+    const runErrorMessage = discoveryErrors.length > 0
+      ? `Discovery completed with errors on ${discoveryErrors.length} page(s): ${discoveryErrors.join("; ")}`
+      : null;
+
     // Final update — discovery complete
     await supabase.from("test_runs").update({
       status: "completed",
       current_phase: "Discovery completed — ready for test generation",
       progress: 100,
       coverage_percentage: 0,
+      error_message: runErrorMessage,
       completed_at: new Date().toISOString(),
     }).eq("id", runId);
 
