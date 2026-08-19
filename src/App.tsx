@@ -5,7 +5,6 @@ import { Sidebar, type PageKey } from "@/components/Sidebar";
 import { Dashboard } from "@/pages/Dashboard";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { CreateProjectPage } from "@/pages/CreateProjectPage";
-import { ProjectDetailPage } from "@/pages/ProjectDetailPage";
 import { TestRunsPage } from "@/pages/TestRunsPage";
 import { TestRunDetailPage } from "@/pages/TestRunDetailPage";
 import { TestCasesPage } from "@/pages/TestCasesPage";
@@ -15,15 +14,12 @@ import { BugDetailPage } from "@/pages/BugDetailPage";
 import { CoveragePage } from "@/pages/CoveragePage";
 import { ReportsPage } from "@/pages/ReportsPage";
 import { ReportDetailPage } from "@/pages/ReportDetailPage";
-import { RunComparisonPage } from "@/pages/RunComparisonPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 
 interface NavState {
   page: PageKey;
   projectId?: string;
   runId?: string;
-  runIdA?: string;
-  runIdB?: string;
   testCaseId?: string;
   bugId?: string;
   reportId?: string;
@@ -56,7 +52,7 @@ function App() {
     description: string,
     target: Omit<Target, "id" | "project_id" | "created_at">,
     config: Omit<TestConfiguration, "id" | "project_id" | "created_at" | "settings">,
-    settings: Record<string, unknown>,
+  settings: Record<string, unknown>,
   ) => {
     // Create project
     const { data: project, error: projectError } = await supabase
@@ -85,35 +81,6 @@ function App() {
 
     if (configError || !configRec) throw new Error("Failed to create config");
 
-    // Create initial version v1.0
-    const { data: versionRec } = await supabase
-      .from("project_versions")
-      .insert({
-        project_id: project.id,
-        version_label: "v1.0",
-        description: "Initial baseline",
-      })
-      .select()
-      .single();
-
-    // Build config snapshot
-    const configSnapshot = {
-      profile: config.profile,
-      max_pages: config.max_pages,
-      max_test_cases: config.max_test_cases,
-      crawl_depth: config.crawl_depth,
-      rate_limit_ms: config.rate_limit_ms,
-      timeout_ms: config.timeout_ms,
-      screenshot_on_failure: config.screenshot_on_failure,
-      capture_console: config.capture_console,
-      capture_network: config.capture_network,
-      target_url: target.url,
-      target_type: target.type,
-      environment: target.environment,
-      auth_required: target.auth_required,
-      auth_login_url: (target as Record<string, unknown>).auth_login_url ?? null,
-    };
-
     // Create run
     const { data: run, error: runError } = await supabase
       .from("test_runs")
@@ -121,8 +88,6 @@ function App() {
         project_id: project.id,
         target_id: targetRec.id,
         config_id: configRec.id,
-        version_id: versionRec?.id ?? null,
-        config_snapshot: configSnapshot,
         status: "pending",
       })
       .select()
@@ -135,7 +100,9 @@ function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ runId: run.id }),
-    }).catch(() => {});
+    }).catch(() => {
+      // Edge function will update run status; UI handles errors via polling
+    });
 
     await fetchProjects();
     navigate("runs", { runId: run.id });
@@ -146,21 +113,20 @@ function App() {
       case "dashboard":
         return <Dashboard onNavigate={navigate} />;
       case "projects":
-        if (nav.showCreate) {
-          return <CreateProjectPage onNavigate={navigate} onStart={startTesting} />;
-        }
-        if (nav.projectId) {
-          return <ProjectDetailPage projectId={nav.projectId} onNavigate={navigate} />;
-        }
-        return <ProjectsPage onNavigate={navigate} projects={projects} loading={loading} onRefresh={fetchProjects} />;
+        return nav.showCreate ? (
+          <CreateProjectPage
+            onNavigate={navigate}
+            onStart={startTesting}
+          />
+        ) : (
+          <ProjectsPage onNavigate={navigate} projects={projects} loading={loading} onRefresh={fetchProjects} />
+        );
       case "runs":
-        if (nav.runIdA && nav.runIdB) {
-          return <RunComparisonPage runIdA={nav.runIdA} runIdB={nav.runIdB} onNavigate={navigate} />;
-        }
-        if (nav.runId) {
-          return <TestRunDetailPage runId={nav.runId} onNavigate={navigate} />;
-        }
-        return <TestRunsPage onNavigate={navigate} />;
+        return nav.runId ? (
+          <TestRunDetailPage runId={nav.runId} onNavigate={navigate} />
+        ) : (
+          <TestRunsPage onNavigate={navigate} />
+        );
       case "test-cases":
         return nav.testCaseId ? (
           <TestCaseDetailPage testCaseId={nav.testCaseId} onNavigate={navigate} />
