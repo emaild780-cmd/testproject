@@ -1,6 +1,6 @@
 {
   "imports": {
-    "npm:@supabase/supabase-js@2.57.4": "https://esm.sh/@supabase/supabase-js@2.57.4",
-    "npm:playwright-core@1.48.0": "https://esm.sh/playwright-core@1.48.0"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.57.4",
+    "playwright-core": "https://esm.sh/playwright-core@1.45.0"
   }
 }
