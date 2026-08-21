@@ -100,6 +100,14 @@ export interface Project {
   updated_at: string;
 }
 
+export interface ProjectVersion {
+  id: string;
+  project_id: string;
+  version_label: string;
+  description: string | null;
+  created_at: string;
+}
+
 export interface Target {
   id: string;
   project_id: string;
@@ -110,6 +118,7 @@ export interface Target {
   file_size: number | null;
   environment: Environment;
   auth_required: boolean;
+  auth_login_url: string | null;
   auth_username: string | null;
   auth_password: string | null;
   notes: string | null;
@@ -137,6 +146,8 @@ export interface TestRun {
   id: string;
   project_id: string;
   target_id: string;
+  version_id: string | null;
+  config_snapshot: Record<string, unknown> | null;
   config_id: string;
   status: RunStatus;
   current_phase: string | null;
@@ -154,6 +165,7 @@ export interface TestRun {
   completed_at: string | null;
   created_at: string;
   targets?: Target;
+  project_versions?: ProjectVersion;
   test_configurations?: TestConfiguration;
 }
 
@@ -277,6 +289,7 @@ export interface Coverage {
 
 export interface Report {
   id: string;
+  version_id: string | null;
   run_id: string;
   type: "full" | "executive" | "bug" | "coverage";
   format: "json" | "pdf" | "csv";

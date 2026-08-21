@@ -9,14 +9,7 @@ import {
   formatDate,
 } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import {
-  ArrowLeft,
-  Bug as BugIcon,
-  Globe,
-  AlertTriangle,
-  CheckCircle2,
-  FileText,
-} from "lucide-react";
+import { ArrowLeft, Bug as BugIcon, Globe, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, FileText } from "lucide-react";
 
 interface BugDetailPageProps {
   bugId: string;

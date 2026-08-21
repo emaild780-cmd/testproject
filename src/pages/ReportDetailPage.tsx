@@ -3,18 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { Report, TestRun } from "@/types";
 import { formatDate, getQualityScoreColor } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import {
-  ArrowLeft,
-  FileText,
-  Globe,
-  Download,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  TrendingUp,
-  ShieldCheck,
-  Lightbulb,
-} from "lucide-react";
+import { ArrowLeft, FileText, Globe, Download, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, TrendingUp, ShieldCheck, Lightbulb } from "lucide-react";
 
 interface ReportDetailPageProps {
   reportId: string;

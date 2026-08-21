@@ -8,7 +8,7 @@ import {
   formatDuration,
 } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import { ArrowLeft, CheckCircle2, XCircle, Clock, FileText, Camera, Terminal, Wifi, Bug as BugIcon } from "lucide-react";
+import { ArrowLeft, CircleCheck as CheckCircle2, Circle as XCircle, Clock, FileText, Camera, Terminal, Wifi, Bug as BugIcon } from "lucide-react";
 
 interface TestCaseDetailPageProps {
   testCaseId: string;

@@ -8,19 +8,7 @@ import {
   formatDate,
 } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import {
-  ShieldCheck,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Bug,
-  Activity,
-  Gauge,
-  ArrowRight,
-  PlayCircle,
-  FolderKanban,
-} from "lucide-react";
+import { ShieldCheck, TrendingUp, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Circle as XCircle, Bug, Activity, Gauge, ArrowRight, CirclePlay as PlayCircle, FolderKanban } from "lucide-react";
 
 interface DashboardProps {
   onNavigate: (page: PageKey, extra?: Record<string, string>) => void;

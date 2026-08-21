@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { chromium } from "playwright-core";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { chromium } from "npm:playwright-core@1.48.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,68 +77,6 @@ async function connectBrowser(): Promise<BrowserHandle> {
     throw new Error(
       "No browser available. Set BROWSER_WS_ENDPOINT to a Playwright-compatible WebSocket endpoint.",
     );
-  }
-}
-
-// === AUTHENTICATION ===
-
-type BrowserContext = Awaited<ReturnType<BrowserHandle["browser"]["newContext"]>>;
-
-async function authenticate(
-  context: BrowserContext,
-  loginUrl: string,
-  username: string,
-  password: string,
-  timeoutMs: number,
-): Promise<void> {
-  const page = await context.newPage();
-  try {
-    await page.goto(loginUrl, { waitUntil: "networkidle", timeout: timeoutMs });
-
-    // Find username field: try email input first, then text input with email-like name/placeholder
-    let usernameField = await page.$('input[type="email"]');
-    if (!usernameField) {
-      usernameField = await page.$('input[name*="email" i]') ??
-        await page.$('input[name*="user" i]') ??
-        await page.$('input[placeholder*="email" i]') ??
-        await page.$('input[placeholder*="user" i]');
-    }
-    if (!usernameField) {
-      throw new Error("Could not find username/email field on login page");
-    }
-
-    await usernameField.fill(username);
-
-    // Find password field
-    const passwordField = await page.$('input[type="password"]');
-    if (!passwordField) {
-      throw new Error("Could not find password field on login page");
-    }
-    await passwordField.fill(password);
-
-    // Find and click submit button
-    const submitButton = await page.$('button[type="submit"]') ??
-      await page.$('input[type="submit"]') ??
-      await page.$('button:has-text("Log in")') ??
-      await page.$('button:has-text("Sign in")') ??
-      await page.$('button:has-text("Login")');
-    if (submitButton) {
-      await submitButton.click();
-    } else {
-      await passwordField.press("Enter");
-    }
-
-    // Wait for navigation away from login page
-    await page.waitForURL((url: URL) => !url.pathname.includes("/login"), { timeout: timeoutMs });
-    await page.waitForTimeout(2000).catch(() => {});
-
-    // Verify we're not still on the login page
-    const currentUrl = page.url();
-    if (currentUrl.includes("/login")) {
-      throw new Error("Authentication may have failed — the target URL redirected to a login page (" + currentUrl + ")");
-    }
-  } finally {
-    await page.close().catch(() => {});
   }
 }
 
@@ -339,33 +277,43 @@ async function discoverPage(
 }
 
 async function discoverSite(
-  context: BrowserContext,
+  browser: BrowserHandle,
   startUrl: string,
   maxPages: number,
   crawlDepth: number,
   rateLimitMs: number,
   timeoutMs: number,
+  authCredentials?: { username: string; password: string },
 ): Promise<DiscoveredPage[]> {
+  const context = await browser.browser.newContext({
+    userAgent: "QAPlatform-Bot/1.0 (AI Testing; Playwright)",
+    viewport: { width: 1280, height: 720 },
+  });
+
   const visited = new Set<string>();
   const queue: { url: string; depth: number }[] = [{ url: startUrl, depth: 0 }];
   const pages: DiscoveredPage[] = [];
 
-  while (queue.length > 0 && pages.length < maxPages) {
-    const { url, depth } = queue.shift()!;
-    if (visited.has(url)) continue;
-    visited.add(url);
+  try {
+    while (queue.length > 0 && pages.length < maxPages) {
+      const { url, depth } = queue.shift()!;
+      if (visited.has(url)) continue;
+      visited.add(url);
 
-    const page = await discoverPage(context, url, depth, timeoutMs);
-    pages.push(page);
+      const page = await discoverPage(context, url, depth, timeoutMs, authCredentials);
+      pages.push(page);
 
-    if (depth < crawlDepth && page.links.length > 0) {
-      for (const link of page.links) {
-        if (!visited.has(link) && sameOrigin(startUrl, link) && pages.length + queue.length < maxPages) {
-          queue.push({ url: link, depth: depth + 1 });
+      if (depth < crawlDepth && page.links.length > 0) {
+        for (const link of page.links) {
+          if (!visited.has(link) && sameOrigin(startUrl, link) && pages.length + queue.length < maxPages) {
+            queue.push({ url: link, depth: depth + 1 });
+          }
         }
       }
+      if (rateLimitMs > 0 && queue.length > 0) await new Promise((r) => setTimeout(r, rateLimitMs));
     }
-    if (rateLimitMs > 0 && queue.length > 0) await new Promise((r) => setTimeout(r, rateLimitMs));
+  } finally {
+    await context.close().catch(() => {});
   }
   return pages;
 }

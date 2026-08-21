@@ -3,17 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { Coverage, TestRun } from "@/types";
 import { TECHNIQUE_LABELS, formatDate } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import {
-  GitBranch,
-  Globe,
-  TrendingUp,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Map,
-  ListChecks,
-  ChevronRight,
-} from "lucide-react";
+import { GitBranch, Globe, TrendingUp, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, Map, ListChecks, ChevronRight } from "lucide-react";
 
 interface CoveragePageProps {
   onNavigate: (page: PageKey, extra?: Record<string, unknown>) => void;

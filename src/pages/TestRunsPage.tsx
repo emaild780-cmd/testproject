@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { TestRun } from "@/types";
 import { STATUS_COLORS, getQualityScoreColor, formatDate } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import { PlayCircle, Globe, ChevronRight, Plus } from "lucide-react";
+import { CirclePlay as PlayCircle, Globe, ChevronRight, Plus } from "lucide-react";
 
 interface TestRunsPageProps {
   onNavigate: (page: PageKey, extra?: Record<string, unknown>) => void;

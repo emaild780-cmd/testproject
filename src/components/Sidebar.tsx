@@ -1,17 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  LayoutDashboard,
-  FolderKanban,
-  PlayCircle,
-  ListChecks,
-  Bug,
-  GitBranch,
-  FileText,
-  Settings,
-  ShieldCheck,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, FolderKanban, CirclePlay as PlayCircle, ListChecks, Bug, GitBranch, FileText, Settings, ShieldCheck, Menu, X } from "lucide-react";
 
 export type PageKey =
   | "dashboard"

@@ -12,20 +12,7 @@ import {
   formatDuration,
 } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import {
-  ArrowLeft,
-  Globe,
-  CheckCircle2,
-  XCircle,
-  PauseCircle,
-  Bug as BugIcon,
-  Gauge,
-  TrendingUp,
-  Loader2,
-  Map,
-  ListChecks,
-  Activity,
-} from "lucide-react";
+import { ArrowLeft, Globe, CircleCheck as CheckCircle2, Circle as XCircle, CirclePause as PauseCircle, Bug as BugIcon, Gauge, TrendingUp, Loader as Loader2, Map, ListChecks, Activity } from "lucide-react";
 
 interface TestRunDetailPageProps {
   runId: string;

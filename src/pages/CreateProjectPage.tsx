@@ -2,16 +2,7 @@ import { useState } from "react";
 import type { Target, TestConfiguration, TestProfile, Environment, TargetType } from "@/types";
 import { PROFILE_LABELS, PROFILE_DESCRIPTIONS } from "@/lib/constants";
 import type { PageKey } from "@/components/Sidebar";
-import {
-  Globe,
-  Smartphone,
-  ShieldCheck,
-  Lock,
-  Rocket,
-  ArrowLeft,
-  Loader2,
-  CheckCircle2,
-} from "lucide-react";
+import { Globe, Smartphone, ShieldCheck, Lock, Rocket, ArrowLeft, Loader as Loader2, CircleCheck as CheckCircle2 } from "lucide-react";
 
 interface CreateProjectPageProps {
   onNavigate: (page: PageKey, extra?: Record<string, unknown>) => void;
@@ -46,6 +37,7 @@ export function CreateProjectPage({ onNavigate, onStart }: CreateProjectPageProp
   const [urlError, setUrlError] = useState<string | null>(null);
   const [environment, setEnvironment] = useState<Environment>("staging");
   const [authRequired, setAuthRequired] = useState(false);
+  const [authLoginUrl, setAuthLoginUrl] = useState("");
   const [authUsername, setAuthUsername] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -122,6 +114,7 @@ export function CreateProjectPage({ onNavigate, onStart }: CreateProjectPageProp
           file_size: fileSize,
           environment,
           auth_required: authRequired,
+          auth_login_url: authRequired && authLoginUrl ? authLoginUrl : null,
           auth_username: authRequired ? authUsername : null,
           auth_password: authRequired ? authPassword : null,
           notes: null,
@@ -323,21 +316,33 @@ export function CreateProjectPage({ onNavigate, onStart }: CreateProjectPageProp
                     />
                   </button>
                   {authRequired && (
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={authUsername}
-                        onChange={(e) => setAuthUsername(e.target.value)}
-                        placeholder="Username"
-                        className="px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
-                      />
-                      <input
-                        type="password"
-                        value={authPassword}
-                        onChange={(e) => setAuthPassword(e.target.value)}
-                        placeholder="Password"
-                        className="px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
-                      />
+                    <div className="mt-3 space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Login URL (optional — defaults to /login on the target domain)</label>
+                        <input
+                          type="url"
+                          value={authLoginUrl}
+                          onChange={(e) => setAuthLoginUrl(e.target.value)}
+                          placeholder="https://example.com/login"
+                          className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          type="text"
+                          value={authUsername}
+                          onChange={(e) => setAuthUsername(e.target.value)}
+                          placeholder="Username / Email"
+                          className="px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
+                        />
+                        <input
+                          type="password"
+                          value={authPassword}
+                          onChange={(e) => setAuthPassword(e.target.value)}
+                          placeholder="Password"
+                          className="px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
